@@ -1,5 +1,6 @@
 var mysql = require('mysql');
 var prompt = require('prompt');
+var $ = require('jQuery');
 
 var connection = mysql.createConnection({
   host: "localhost",
@@ -39,28 +40,32 @@ var showInventory = function() {
 		}], function (err, result) {
 			var itemID = result.item;
 			var itemQuantity = result.quantity;
-			query = "SELECT stock_quantity FROM Bamazon.products WHERE item_id=" + itemID;
+			query = "SELECT * FROM Bamazon.products WHERE item_id=" + itemID;
 			connection.query(query, function(err, res) {
-				// console.log(JSON.parse(res.stock_quantity));
-				// prompt.start();
+				var qty = res[0].stock_quantity;
+				var price = res[0].price;
+				if (itemQuantity > qty) {
+					console.log('Insufficient quantity!  Please select again.');
+					showInventory();
+				}
+				else {
+					var totalPrice = itemQuantity * price;
+					var decimalPrice = totalPrice.toFixed(2);
+					var newQuantity = qty - itemQuantity;
+					console.log("---------------------------");
+					console.log('Your order has been placed.');
+					console.log("---------------------------");
+					console.log("Your total price: " + decimalPrice);
+					console.log("---------------------------");
+					console.log("Thank you, come again! Press control+c to exit.");
+					connection.query("UPDATE Bamazon.products SET ? WHERE ?", [{
+						stock_quantity: newQuantity
+						}, {
+						item_id: itemID
+						}], function(err, res){});
+				};
 			});
-			// console.log(itemID + " || " + itemQuantity);
-			// console.log(result.item + " || " + result.quantity);
 		});
-	
 	});
 };
 
-// prompt.get(['Which item would you like to purchase?'], function (err, result) {
-// 		console.log(result);
-// 	});
-// prompt.start();
-
-// prompt.get(['username', 'email'], function (err, result) {
-//     // 
-//     // Log the results. 
-//     // 
-//     console.log('Command-line input received:');
-//     console.log('  username: ' + result.username);
-//     console.log('  email: ' + result.email);
-//   });
